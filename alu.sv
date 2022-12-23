@@ -1,35 +1,41 @@
-module alu(
-  input wire [7:0] a,
-  input wire [7:0] b,
-  input wire [1:0] opcode,
-  output wire [7:0] result,
-  output wire zero,
-  output wire carry,
-  output wire overflow
+module ALU(
+  input [4:0] opcode,
+  input [31:0] a,
+  input [31:0] b,
+  output [31:0] result,
+  output [4:0] next_pc
 );
-  reg [7:0] result;
-  reg zero;
-  reg carry;
-  reg overflow;
+    parameter ALU_ADD = 5'b00000;
+    parameter ALU_SUB = 5'b01000;
+    parameter ALU_AND = 5'b00001;
+    parameter ALU_OR  = 5'b00010;
+    parameter ALU_XOR = 5'b00011;
+    parameter ALU_SLT = 5'b01011;
+    parameter ALU_SLTU = 5'b01010;
+    parameter ALU_SLL = 5'b00101;
+    parameter ALU_SRL = 5'b00110;
+    parameter ALU_SRA = 5'b00111;
+    parameter PC_PLUS_4 = 5'b00000;
+    parameter PC_BRANCH = 5'b00100;
+    parameter PC_JALR = 5'b00101;
+    parameter PC_JAL = 5'b00110;
 
-  // Define the operations that the ALU can perform
-  always_comb begin
+    always_comb begin
     case (opcode)
-      2'b00: result = a & b;
-      2'b01: result = a | b;
-      2'b10: result = a + b;
-      2'b11: result = a - b;
+        ALU_ADD: result = a + b; next_pc = PC_PLUS_4;
+        ALU_SUB: result = a - b; next_pc = PC_PLUS_4;
+        ALU_AND: result = a & b; next_pc = PC_PLUS_4;
+        ALU_OR:  result = a | b; next_pc = PC_PLUS_4;
+        ALU_XOR: result = a ^ b; next_pc = PC_PLUS_4;
+        ALU_SLT: result = (a < b) ? 1 : 0; next_pc = PC_PLUS_4;
+        ALU_SLTU: result = (a < b) ? 1 : 0; next_pc = PC_PLUS_4;
+        ALU_SLL: result = a << b[4:0]; next_pc = PC_PLUS_4;
+        ALU_SRL: result = a >> b[4:0]; next_pc = PC_PLUS_4;
+        ALU_SRA: result = a >> b[4:0]; next_pc = PC_PLUS_4;
+        PC_BRANCH: result = a; next_pc = PC_BRANCH;
+        PC_JALR: result = a; next_pc = PC_JALR;
+        PC_JAL: result = a; next_pc = PC_JAL;
+        default: result = 0; next_pc = PC_PLUS_4;
     endcase
-  end
-
-  // Check for zero and carry out
-  always_ff @(posedge clock) begin
-    if (result == 8'h00) begin
-      zero <= 1'b1;
-    end else begin
-      zero <= 1'b0;
     end
-    carry <= (result[7] & ~b[7] & ~a[7]) | (result[7] & b[7] & a[7]) | (a[7] & ~b[7] & ~result[7]);
-    overflow <= (result[7] & ~b[7] & ~a[7]) | (~result[7] & b[7] & a[7]);
-  end
 endmodule
