@@ -1,12 +1,21 @@
-module instruction_memory(
-  input wire [15:0] address,
-  output wire [7:0] instruction
+module InstructionMemory(
+  input clk,
+  input reset,
+  output [31:0] pc,
+  output [31:0] instruction
 );
-  reg [7:0] mem[255:0]; // 256 8-bit instruction memory locations
 
-  always_ff @(posedge clock) begin
-    instruction <= mem[address];
+reg [31:0] pc;
+reg [31:0] instruction;
+
+always_ff @(posedge clk) begin
+  if (reset) begin
+    pc <= 0;
+  end else begin
+    pc <= pc + 4;
   end
+end
+
 endmodule
 
 module register_file(
