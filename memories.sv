@@ -5,9 +5,6 @@ module InstructionMemory(
   output [31:0] instruction
 );
 
-reg [31:0] pc;
-reg [31:0] instruction;
-
 always_ff @(posedge clk) begin
   if (reset) begin
     pc <= 0;
@@ -18,19 +15,27 @@ end
 
 endmodule
 
-module register_file(
-  input wire [3:0] rd_addr,
-  input wire [3:0] wr_addr,
-  input wire [7:0] wr_data,
-  input wire wr_enable,
-  output wire [7:0] rd_data
+module RegisterFile(
+  input [4:0] read_reg_1,
+  input [4:0] read_reg_2,
+  input [4:0] write_reg,
+  input [31:0] write_data,
+  output [31:0] regfile_out_1,
+  output [31:0] regfile_out_2,
+  output [31:0] regfile[32]
 );
-  reg [7:0] regs[15:0]; // 16 8-bit registers
 
-  always_ff @(posedge clock) begin
-    if (wr_enable) begin
-      regs[wr_addr] <= wr_data;
-    end
-    rd_data <= regs[rd_addr];
-  end
+reg [31:0] regfile[32];
+
+// read registers
+always_comb begin
+  regfile_out_1 = regfile[read_reg_1];
+  regfile_out_2 = regfile[read_reg_2];
+end
+
+// write register
+always_ff @(posedge clk) begin
+  regfile[write_reg] <= write_data;
+end
+
 endmodule

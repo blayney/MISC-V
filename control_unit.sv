@@ -1,49 +1,58 @@
-module control_unit(
-  input wire [7:0] instruction,
-  output wire [1:0] alu_op,
-  output wire [3:0] rd_addr,
-  output wire [3:0] wr_addr,
-  output wire wr_enable
-);
-  reg [1:0] alu_op;
-  reg [3:0] rd_addr;
-  reg [3:0] wr_addr;
-  reg wr_enable;
+module ControlUnit(
+  input [6:0] opcode,
+  input [2:0] func3,
+  input [7:0] func7,
+  output [4:0] alu_op,
+  output branch_op,
+  output jump_op
+);  
 
-  // Decode the instruction and generate control signals
-  always_comb begin
-    // Extract the opcode and operand fields from the instruction
-    case (instruction[7:4])
-      4'b0000: begin
-        alu_op = 2'b00; // AND
-        rd_addr = instruction[3:0];
-        wr_addr = instruction[3:0];
-        wr_enable = 1'b1;
-      end
-      4'b0001: begin
-        alu_op = 2'b01; // OR
-        rd_addr = instruction[3:0];
-        wr_addr = instruction[3:0];
-        wr_enable = 1'b1;
-      end
-      4'b0010: begin
-        alu_op = 2'b10; // ADD
-        rd_addr = instruction[3:0];
-        wr_addr = instruction[3:0];
-        wr_enable = 1'b1;
-      end
-      4'b0011: begin
-        alu_op = 2'b11; // SUB
-        rd_addr = instruction[3:0];
-        wr_addr = instruction[3:0];
-        wr_enable = 1'b1;
-      end
-      4'b0100: begin
-        rd_addr = instruction[3:0];
-        wr_addr = instruction[3:0];
-        wr_enable = 1'b0; // NOP
-      end
-      // Add additional opcodes as needed
-    endcase
-  end
+parameter ALU_ADD = 5'b00000;
+parameter ALU_SUB = 5'b01000;
+parameter ALU_AND = 5'b00001;
+parameter ALU_OR  = 5'b00010;
+parameter ALU_XOR = 5'b00011;
+parameter ALU_SLT = 5'b01011;
+parameter ALU_SLTU = 5'b01010;
+parameter ALU_SLL = 5'b00101;
+parameter ALU_SRL = 5'b00110;
+parameter ALU_SRA = 5'b00111;
+parameter PC_PLUS_4 = 5'b00000;
+parameter PC_BRANCH = 5'b00100;
+parameter PC_JALR = 5'b00101;
+parameter PC_JAL = 5'b00110;
+
+always_comb begin
+  alu_op = 0;
+  branch_op = 0;
+  jump_op = 0;
+  case (opcode)
+    // R-type instructions
+    6'b0110011: begin
+      alu_op = func3;
+      case (func7)
+        7'b0000000: alu_op = ALU_ADD;
+        7'b0100000: alu_op = ALU_SUB;
+        7'b0000000: alu_op = ALU_SLL;
+        7'b0000000: alu_op = ALU_SLT;
+        7'b0000000: alu_op = ALU_SLTU;
+        7'b0000000: alu_op = ALU_XOR;
+        7'b0000000: alu_op = ALU_SRL;
+        7'b0100000: alu_op = ALU_SRA;
+        7'b0000000: alu_op = ALU_OR;
+        7'b0000000: alu_op = ALU_AND;
+      endcase
+    end
+    // I-type instructions
+    6'b0010011: alu_op = func3;
+    // S-type instructions
+    6'b0100011: alu_op = func3;
+    // B-type instructions
+    6'b1100011: branch_op = 1;
+    // U-type instructions
+    6'b0110111: jump_op = 1;
+    6'b0010111: jump_op = 1;
+  endcase
+end
+
 endmodule
